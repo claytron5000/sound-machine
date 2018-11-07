@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sound Machine</title>
+    <link rel="stylesheet" href="./base-min.css"></link>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <header>
+        <h1>Sound Machine</h1>
+        <span>
+            <label for="volume">master volume</label>
+            <input type="range" id="master-volume" min="0" max="2" value="1" step="0.01" />
+        </span>
+    </header>
+    <div class="sounds">
+        <div class="sound-block">
+            <h2>Rain on Porch</h2>
+            <audio src="./audio/porch_rain.ogg" type="audio/mpeg" loop></audio>
+            <button data-playing="false" role="switch" aria-checked="false" loop="true">play/pause</button>
+            <span>
+                <label for="volume">volume</label>
+                <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
+            </span>
+        </div>
+        <div class="sound-block">
+            <h2>Bird 1</h2>
+            <audio src="./audio/bird_chirping.ogg" type="audio/mpeg" loop></audio>
+            <button data-playing="false" role="switch" aria-checked="false" loop="true">play/pause</button>
+            <span>
+                <label for="volume">volume</label>
+                <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
+            </span>
+        </div>
+        <div class="sound-block">
+            <h2>Bird 2</h2>
+            <audio src="./audio/bird_chirping2.ogg" type="audio/mpeg" loop></audio>
+            <button data-playing="false" role="switch" aria-checked="false" loop="true">play/pause</button>
+            <span>
+                <label for="volume">volume</label>
+                <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
+            </span>
+        </div>
+    </div>
+    <script src="player.js"></script>
+</body>
+</html>

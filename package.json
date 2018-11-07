@@ -1,0 +1,23 @@
+{
+  "name": "sound_machine",
+  "version": "1.0.0",
+  "description": "A software sound machine",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/claytron5000/sound-machine.git"
+  },
+  "keywords": [
+    "Sound",
+    "Machine"
+  ],
+  "author": "Clayton Salem",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/claytron5000/sound-machine/issues"
+  },
+  "homepage": "https://github.com/claytron5000/sound-machine#readme"
+}

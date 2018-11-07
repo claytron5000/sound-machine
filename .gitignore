@@ -1,3 +1,5 @@
 original_audio/*
 .DS_Store
 node_modules/*
+# just for local development
+docs/index.js

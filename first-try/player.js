@@ -4,15 +4,14 @@ class Track {
         this.track = audioCtx.createMediaElementSource(this.audioElement);
         this.gainNode = audioCtx.createGain();
 
-        this.track.connect(this.gainNode).connect(masterGainNode).connect(audioCtx.destination)
-
+        // this.track.connect(this.gainNode).connect(masterGainNode).connect(audioCtx.destination)
+        this.track.connect(audioCtx.destination)
         node.querySelector('button').addEventListener('click', () => {
             console.log(node)
             this.playSound(node.querySelector('button'))
         });
         this.volumeControl = node.querySelector('.volume');
         this.volumeControl.addEventListener('input', () => {
-            console.log('gainning')
             this.gainNode.gain.value = this.volumeControl.value;
         }, false);
     }

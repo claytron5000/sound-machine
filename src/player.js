@@ -1,9 +1,14 @@
 const format = '.' + (new Audio().canPlayType('audio/ogg') !== '' ? 'ogg' : 'mp3');
+const promiseDecodeAudioData = function(arrayBuffer, audioCtx) {
+    return new Promise((resolve, reject) => {
+        audioCtx.decodeAudioData(arrayBuffer, (decodedData) => {resolve(decodedData)})
+    })
+}
 
 class Track {
     constructor(node) {
-        const uri = node.querySelector('audio').getAttribute('src')
-        const url = uri.substring(0, uri.lastIndexOf('.')) + format
+        const uri = node.querySelector('audio').getAttribute('data-src')
+        const url = uri + format
         this.sourceUrl = url
         this.addPlayButton(node.querySelector('button'))
     }
@@ -12,12 +17,14 @@ class Track {
         const source = audioCtx.createBufferSource();
         fetch(this.sourceUrl)
             .then(response => response.arrayBuffer())
-            .then(arrayBuffer => {
-                source.buffer = audioCtx.createBuffer(arrayBuffer, false);
+            .then(arrayBuffer => promiseDecodeAudioData(arrayBuffer, audioCtx))
+            .then(decodedData => {
+                source.buffer = decodedData;
                 source.connect(audioCtx.destination)
                 this.audioSource = source;
             })
     }
+
 
     playSound(element) {
         console.log('play the sound')
@@ -58,13 +65,36 @@ class AudioPlayer {
             console.log('master input')
             this.gainNode.gain.value = volumeControl.value;
         }, false);
-
     }
+}
 
+const writeSoundBlock = function({title, file}) {
+    return (
+    `<div class="sound-block">
+        <h2>${title}</h2>
+        <audio data-src="${file}" type="audio/mpeg" loop></audio>
+        <button data-playing="false" role="switch" aria-checked="false" loop="true">play/pause</button>
+        <span>
+            <label for="volume">volume</label>
+            <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
+        </span>
+    </div>`)
 }
 
 window.onload = function() {
-    const soundBlocks = document.querySelectorAll('.sound-block');
-    const volumeControl = document.querySelector('#master-volume')
-    const player = new AudioPlayer(soundBlocks, volumeControl)
+    fetch('./audio/sounds.js')
+        .then(response => response.text())
+        .then(data => JSON.parse(data))
+        .then(sounds => sounds.data.map(sound => writeSoundBlock(sound)))
+        .then(soundBlocks => {
+            // Side effects! Write the html
+            document.querySelector('.sounds').insertAdjacentHTML('afterbegin', soundBlocks);
+            return soundBlocks
+        })
+        .then(soundBlocks => {
+            const soundBlockNodes = document.querySelectorAll('.sound-block');
+            const volumeControl = document.querySelector('#master-volume')
+            const player = new AudioPlayer(soundBlockNodes, volumeControl)
+        })
+
 }

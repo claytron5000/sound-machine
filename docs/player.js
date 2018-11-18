@@ -26,7 +26,7 @@ function bufferSound(event) {
     mySource.connect(myAudioContext.destination);
 }
 
-document.querySelector("#playButton").addEventListener("touchstart", function() {
+document.querySelector("#playButton").addEventListener("click", function() {
     mySource.start(0);
     alert("yeah")
 }, false)

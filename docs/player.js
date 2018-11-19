@@ -1,8 +1,22 @@
 const format = '.' + (new Audio().canPlayType('audio/ogg') !== '' ? 'ogg' : 'mp3');
+
 const promiseDecodeAudioData = function(arrayBuffer, audioCtx) {
     return new Promise((resolve, reject) => {
         audioCtx.decodeAudioData(arrayBuffer, (decodedData) => {resolve(decodedData)})
     })
+}
+
+const writeSoundBlock = function({title, file}) {
+    return (
+    `<div class="sound-block">
+        <h2>${title}</h2>
+        <audio data-src="${file}" type="audio/mpeg" loop></audio>
+        <button style="cursor: pointer" data-playing="false" role="switch" aria-checked="false" loop="true">play/pause</button>
+        <span>
+            <label for="volume">volume</label>
+            <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
+        </span>
+    </div>`)
 }
 
 class Track {
@@ -20,14 +34,12 @@ class Track {
             .then(arrayBuffer => promiseDecodeAudioData(arrayBuffer, audioCtx))
             .then(decodedData => {
                 source.buffer = decodedData;
+                source.loop = true;
                 source.connect(audioCtx.destination)
-                this.audioSource = source;
+                this.audioSource =  source;
             })
     }
-
-
     playSound(element) {
-        console.log('play the sound')
         // play or pause track depending on state
         if (element.dataset.playing === 'false') {
             console.log(this.audioSource)
@@ -60,25 +72,15 @@ class AudioPlayer {
         for (let i=0; i<soundBlocks.length; i++) {
             this.sounds[i] = new Track(soundBlocks[i])
             this.sounds[i].loadIntoContext(this.audioCtx)
+                // .then(audioSource => audioSource.connect(gainNode))
+
+            console.log(this.sounds[i].audioSource)
         }
         volumeControl.addEventListener('input', () => {
             console.log('master input')
             this.gainNode.gain.value = volumeControl.value;
         }, false);
     }
-}
-
-const writeSoundBlock = function({title, file}) {
-    return (
-    `<div class="sound-block">
-        <h2>${title}</h2>
-        <audio data-src="${file}" type="audio/mpeg" loop></audio>
-        <button style="cursor: pointer" data-playing="false" role="switch" aria-checked="false" loop="true">play/pause</button>
-        <span>
-            <label for="volume">volume</label>
-            <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
-        </span>
-    </div>`)
 }
 
 window.onload = function() {
@@ -88,7 +90,8 @@ window.onload = function() {
         .then(sounds => sounds.data.map(sound => writeSoundBlock(sound)))
         .then(soundBlocks => {
             // Side effects! Write the html
-            document.querySelector('.sounds').insertAdjacentHTML('afterbegin', soundBlocks);
+            const blocks = soundBlocks.reduce((acc, curr) => acc + curr)
+            document.querySelector('.sounds').insertAdjacentHTML('afterbegin', blocks);
             return soundBlocks
         })
         .then(soundBlocks => {
@@ -96,5 +99,4 @@ window.onload = function() {
             const volumeControl = document.querySelector('#master-volume')
             const player = new AudioPlayer(soundBlockNodes, volumeControl)
         })
-
 }

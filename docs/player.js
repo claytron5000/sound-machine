@@ -35,7 +35,6 @@ class Track {
     }
 
     fetchAndLoad() {
-        console.log(this.uri)
         return fetch(this.uri)
             .then(res => res.arrayBuffer())
             .then(buff => this.audioCtx.decodeAudioData(buff))

@@ -38,7 +38,7 @@ class Track {
         return fetch(this.uri)
             .then(res => res.arrayBuffer())
             .then(buff => this.audioCtx.decodeAudioData(buff))
-            .then(decodedData => { this.sourceData = decodedData })
+        // .then(decodedData => { console.log(decodedData); return decodedData })
     }
 
     playSound(element) {
@@ -76,7 +76,13 @@ class AudioPlayer {
     }
 
     fetchAndLoadTracks() {
-        return Promise.all(this.tracks.map(track => track.fetchAndLoad()))
+        Promise.all(this.tracks.map(track => track.fetchAndLoad()))
+            .then(buffers => buffers.map(buffer => this.audioCtx.createBufferSource(buffer)))
+            .then(sources => sources.map(source => source.connect(this.gainNode).connect(this.audioCtx.destination)))
+    }
+
+    printSoundBoxes() {
+
     }
 }
 
@@ -90,9 +96,9 @@ window.onload = function () {
         // Our AudioPlayer object contains the AudioContext, and each of the Tracks.
         .then(tracks => new AudioPlayer(tracks))
         // We fetch the actual arrayBuffer from the files
-        .then(audioPlayer => audioPlayer.fetchAndLoadTracks())
+        .then(audioPlayer => { audioPlayer.fetchAndLoadTracks() })
 
-        .then(tracks => { console.log(tracks) })
+        // .then(tracks => tracks.map(track => ))
         .catch(err => { console.log('Here be errors ' + err) })
 
     // .then(sounds => sounds.data.map(sound => writeSoundBlock(sound)))

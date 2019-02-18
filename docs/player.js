@@ -19,98 +19,89 @@ const writeSoundBlock = function ({ title, file }) {
     </div>`)
 }
 
-/**
- * The Track object gives us a place to store the correct uri for the browser, the title, and 
- * potentially other information if required. It also provides methods with which to interact
- * with each sound.
- */
-class Track {
-    constructor(sound) {
-        this.uri = formatFileName(sound.file)
-        this.title = sound.title
-    }
-
-    addAudioCtx(audioCtx) {
-        this.audioCtx = audioCtx
-    }
-
-    fetchAndLoad() {
-        return fetch(this.uri)
-            .then(res => res.arrayBuffer())
-            .then(buff => this.audioCtx.decodeAudioData(buff))
-        // .then(decodedData => { console.log(decodedData); return decodedData })
-    }
-
-    playSound(element) {
-        // play or pause track depending on state
-        if (element.dataset.playing === 'false') {
-            console.log(this.audioSource)
-            this.audioSource.start(0);
-            element.dataset.playing = 'true';
-        } else if (element.dataset.playing === 'true') {
-            this.audioSource.stop(0);
-            element.dataset.playing = 'false';
-        }
-    }
-    volumeControl(dial) {
-        dial.addEventListener('input', () => {
-            this.gainNode.gain.value = dial.value;
-        }, false);
-    }
-    addPlayButton(playButton) {
-        playButton.addEventListener('click', () => {
-            this.playSound(playButton)
-        });
-    }
-}
-
-class AudioPlayer {
-    constructor(tracks) {
-
-
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        this.audioCtx = new AudioContext();
-        this.gainNode = this.audioCtx.createGain();
-        // Add a reference to the AudioContext on each track.
-        this.tracks = tracks.map(track => { track.addAudioCtx(this.audioCtx); return track; });
-    }
-
-    fetchAndLoadTracks() {
-        Promise.all(this.tracks.map(track => track.fetchAndLoad()))
-            .then(buffers => buffers.map(buffer => this.audioCtx.createBufferSource(buffer)))
-            .then(sources => sources.map(source => source.connect(this.gainNode).connect(this.audioCtx.destination)))
-    }
-
-    printSoundBoxes() {
-
-    }
+const writeToPage = function (tracks) {
+    const container = document.querySelector('#sounds');
+    container.append(tracks.map(track => writeSoundBlock(track)))
 }
 
 window.onload = function () {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
     fetch('./audio/sounds.js')
         // we could do better and actually response with json string
         .then(response => response.text())
-        .then(data => JSON.parse(data))
-        // each of the sounds from our pretend API is mapped to our Track object
-        .then(sounds => sounds.data.map(sound => new Track(sound)))
-        // Our AudioPlayer object contains the AudioContext, and each of the Tracks.
-        .then(tracks => new AudioPlayer(tracks))
-        // We fetch the actual arrayBuffer from the files
-        .then(audioPlayer => { audioPlayer.fetchAndLoadTracks() })
+        .then(text => JSON.parse(text).data)
+        .then(data => { console.log(data); return data })
+        .then(data => writeToPage(data))
 
         // .then(tracks => tracks.map(track => ))
         .catch(err => { console.log('Here be errors ' + err) })
-
-    // .then(sounds => sounds.data.map(sound => writeSoundBlock(sound)))
-    // .then(soundBlocks => {
-    //     // Side effects! Write the html
-    //     const blocks = soundBlocks.reduce((acc, curr) => acc + curr)
-    //     document.querySelector('.sounds').insertAdjacentHTML('afterbegin', blocks);
-    //     return soundBlocks
-    // })
-    // .then(soundBlocks => {
-    //     const soundBlockNodes = document.querySelectorAll('.sound-block');
-    //     const volumeControl = document.querySelector('#master-volume')
-    //     const player = new AudioPlayer(soundBlockNodes, volumeControl)
-    // })
 }
+
+/**
+ * The Track object gives us a place to store the correct uri for the browser, the title, and
+ * potentially other information if required. It also provides methods with which to interact
+ * with each sound.
+ */
+// class Track {
+//     constructor(sound) {
+//         this.uri = formatFileName(sound.file)
+//         this.title = sound.title
+//     }
+
+//     addAudioCtx(audioCtx) {
+//         this.audioCtx = audioCtx
+//     }
+
+//     fetchAndLoad() {
+//         return fetch(this.uri)
+//             .then(res => res.arrayBuffer())
+//             .then(buff => this.audioCtx.decodeAudioData(buff))
+//         // .then(decodedData => { console.log(decodedData); return decodedData })
+//     }
+
+//     playSound(element) {
+//         // play or pause track depending on state
+//         if (element.dataset.playing === 'false') {
+//             console.log(this.audioSource)
+//             this.audioSource.start(0);
+//             element.dataset.playing = 'true';
+//         } else if (element.dataset.playing === 'true') {
+//             this.audioSource.stop(0);
+//             element.dataset.playing = 'false';
+//         }
+//     }
+//     volumeControl(dial) {
+//         dial.addEventListener('input', () => {
+//             this.gainNode.gain.value = dial.value;
+//         }, false);
+//     }
+//     addPlayButton(playButton) {
+//         playButton.addEventListener('click', () => {
+//             this.playSound(playButton)
+//         });
+//     }
+// }
+
+// class AudioPlayer {
+//     constructor(tracks) {
+
+
+//         const AudioContext = window.AudioContext || window.webkitAudioContext;
+//         this.audioCtx = new AudioContext();
+//         this.gainNode = this.audioCtx.createGain();
+//         // Add a reference to the AudioContext on each track.
+//         this.tracks = tracks.map(track => { track.addAudioCtx(this.audioCtx); return track; });
+//     }
+
+//     fetchAndLoadTracks() {
+//         Promise.all(this.tracks.map(track => track.fetchAndLoad()))
+//             .then(buffers => buffers.map(buffer => this.audioCtx.createBufferSource(buffer)))
+//             .then(sources => sources.map(source => source.connect(this.gainNode).connect(this.audioCtx.destination)))
+//     }
+
+//     printSoundBoxes() {
+
+//     }
+// }

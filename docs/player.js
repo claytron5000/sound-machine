@@ -5,30 +5,54 @@ class AudioPlayer {
         this.audioCtx = new AudioContext();
         this.tracks = tracks;
         this.mainGainNode = this.audioCtx.createGain();
-        this.handleStart = this.handleStart.bind(this);
-        // this.mainGainNode.connect(this.audioCtx.destination)
         document.querySelector('#main-volume').addEventListener('input', (e) => {
             this.mainGainNode.gain.value = e.target.value;
-            console.log(e)
         }, false);
+    }
+
+    writeToDocument(sound) {
+        const container = document.querySelector('#sounds');
+        const track = new Track(sound, this.audioCtx, this.mainGainNode);
+        container.insertAdjacentElement('beforeend', track.soundBlock);
+        return track
+    }
+
+}
+
+class Track {
+    constructor(sound, audioCtx, mainGainNode) {
+        this.audioCtx = audioCtx
+        this.soundBlock = this.createSoundBlock(sound)
+        this.mainGainNode = mainGainNode
+        this.mainGainNode.connect(this.audioCtx.destination);
+        this.localGain = this.audioCtx.createGain();
+
+        fetch(this.formatFileName(sound.file))
+            .then(res => res.arrayBuffer())
+            .then(buffer => this.promiseDecodeAudioData(buffer))
+            .then(decodedAudio => {
+                this.audioBuffer = decodedAudio
+            })
+
+    }
+
+    play() {
+        this.source = this.audioCtx.createBufferSource();
+        this.source.buffer = this.audioBuffer;
+        this.source.connect(this.localGain);
+        this.localGain.connect(this.mainGainNode);
+        this.source.start();
+        this.source.loop = true;
+    }
+
+    pause() {
+        this.source.stop()
     }
 
     formatFileName(fileName) {
         return fileName + '.' + (new Audio().canPlayType('audio/ogg') !== '' ? 'ogg' : 'mp3')
     }
 
-    writeSoundBlock({ title, file }) {
-        return (
-            `<div class="sound-block">
-            <h2>${title}</h2>
-            <audio type="audio/mpeg"></audio>
-            <button style="cursor: pointer" data-playing="false" role="switch" aria-checked="false" loop="true">play</button>
-            <span>
-                <label for="volume">volume</label>
-                <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
-            </span>
-        </div>`)
-    }
     // Safari doesn't return promise, so we return our own.
     promiseDecodeAudioData(arrayBuffer) {
         return new Promise((resolve, reject) => {
@@ -36,62 +60,32 @@ class AudioPlayer {
         })
     }
 
-    writeToDocument(sound) {
-        const container = document.querySelector('#sounds');
-        container.insertAdjacentHTML('beforeend', this.writeSoundBlock(sound));
-        const nodes = container.querySelectorAll('.sound-block')
-        const last = nodes[nodes.length - 1];
-        fetch(this.formatFileName(sound.file))
-            .then(res => res.arrayBuffer())
-            .then(buffer => this.promiseDecodeAudioData(buffer))
-            .then(decodedAudio => {
-                last.querySelector('button').addEventListener('click', (buttonEvent) => {
+    createSoundBlock({ title, file }) {
+        const div = document.createElement('div')
+        div.classList.add('sound-block')
+        const write = title => `<h2>${title}</h2>
+        <button class="play" style="cursor: pointer" role="switch" aria-checked="false" loop="true">play</button>
+        <button class="pause" style="display: none" role="switch" aria-checked="false" loop="true">pause</button>
+        <span>
+            <label for="volume">volume</label>
+            <input type="range" class="volume" min="0" max="2" value="1" step="0.01" />
+        </span>`
 
-                    let parent = last.querySelector('button').parentNode;
-                    last.querySelector('button').remove();
-
-                    const newButton = document.createElement('button')
-                    newButton.appendChild(document.createTextNode('pause'));
-
-                    newButton.addEventListener('click', () => {
-                        source.stop()
-                    })
-                    parent.insertAdjacentElement('afterbegin', newButton);
-
-                    const source = this.audioCtx.createBufferSource();
-                    source.buffer = decodedAudio;
-                    const localGain = this.audioCtx.createGain();
-                    last.querySelector('input').addEventListener('input', (sliderEvent) => {
-                        localGain.gain.value = sliderEvent.target.value;
-                    }, false);
-                    // Safari returns undefined, so we have to step-by step connect the nodes instead of chaining.
-                    source.connect(localGain);
-                    localGain.connect(this.mainGainNode);
-                    this.mainGainNode.connect(this.audioCtx.destination);
-                    source.start();
-                    source.loop = true;
-                });
-                return decodedAudio;
-            })
-    }
-
-    handleStart(buttonEvent) {
-        const source = this.audioCtx.createBufferSource();
-        source.buffer = decodedAudio;
-        const localGain = this.audioCtx.createGain();
-        last.querySelector('input').addEventListener('input', (sliderEvent) => {
-            localGain.gain.value = sliderEvent.target.value;
+        div.insertAdjacentHTML('afterbegin', write(title))
+        div.querySelector('.play').addEventListener('click', (e) => {
+            e.target.style = "display: none"
+            e.target.nextElementSibling.style = "cursor: pointer"
+            this.play();
+        });
+        div.querySelector('.pause').addEventListener('click', (e) => {
+            e.target.style = "display: none"
+            e.target.previousElementSibling.style = "cursor: pointer"
+            this.pause()
+        });
+        div.querySelector('input').addEventListener('input', (sliderEvent) => {
+            this.localGain.gain.value = sliderEvent.target.value;
         }, false);
-        // Safari returns undefined, so we have to step-by step connect the nodes instead of chaining.
-        source.connect(localGain);
-        localGain.connect(this.mainGainNode);
-        this.mainGainNode.connect(this.audioCtx.destination);
-        source.start();
-        source.loop = true;
-        // buttonEvent.target.removeEventListener('click')
-        buttonEvent.target.addEventListener('click', () => {
-            source.stop();
-        })
+        return div
     }
 
 }
@@ -105,7 +99,6 @@ window.onload = function () {
         .then(AudioPlayer => {
             AudioPlayer.tracks.forEach((track, index) => {
                 AudioPlayer.writeToDocument(track);
-                // AudioPlayer.tracks[index].decodedAudio = decodedAudio;
             })
         })
         .catch(err => { console.log('Here be errors ' + err) })
